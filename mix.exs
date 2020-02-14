@@ -18,6 +18,6 @@ defmodule BattleBoxClient.MixProject do
   end
 
   defp deps do
-    []
+    [{:jason, "~> 1.1"}]
   end
 end
