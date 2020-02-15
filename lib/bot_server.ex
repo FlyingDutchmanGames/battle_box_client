@@ -14,6 +14,16 @@ defmodule BattleBoxClient.BotServer do
     {:ok, :connecting, data}
   end
 
+  def handle_event(:info, {:tcp_closed, _socket}, state, _data) do
+    Logger.info("TCP CONNECTION CLOSED state:#{state}")
+    {:stop, :normal}
+  end
+
+  def handle_event(:info, {:tcp_error, _socket, _reason}, state, _data) do
+    Logger.info("TCP CONNECTION ERROR state:#{state}")
+    {:stop, :normal}
+  end
+
   def handle_event(:info, {:tcp, socket, bytes}, _state, %{socket: socket}) do
     :ok = :inet.setopts(socket, active: :once)
 
