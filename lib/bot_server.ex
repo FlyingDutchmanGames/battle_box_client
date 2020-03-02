@@ -1,14 +1,24 @@
 defmodule BattleBoxClient.BotServer do
   require Logger
+  alias BattleBoxClient.Logic
   use GenStateMachine, callback_mode: [:handle_event_function], restart: :temporary
 
+  # TODO warn when recieve buffer is exceeded
+  @recieve_buffer_bytes 65536
+
   def start_link(%{token: _, lobby: _, domain: _, port: _} = data) do
+    data = Map.put_new(data, :transport, :gen_tcp)
     GenStateMachine.start_link(__MODULE__, data)
   end
 
   def init(%{domain: domain, port: port} = data) do
     {:ok, socket} =
-      :gen_tcp.connect(domain, port, [:binary, active: :once, packet: :line, recbuf: 65536])
+      data.transport.connect(domain, port, [
+        :binary,
+        active: true,
+        packet: 2,
+        recbuf: @recieve_buffer_bytes
+      ])
 
     data = Map.put(data, :socket, socket)
     {:ok, :connecting, data}
@@ -24,9 +34,8 @@ defmodule BattleBoxClient.BotServer do
     {:stop, :normal}
   end
 
-  def handle_event(:info, {:tcp, socket, bytes}, _state, %{socket: socket}) do
-    :ok = :inet.setopts(socket, active: :once)
-
+  def handle_event(:info, {transport, socket, bytes}, _state, %{socket: socket})
+      when transport in [:ssl, :tcp] do
     case Jason.decode(bytes) do
       {:ok, msg} ->
         {:keep_state_and_data, {:next_event, :internal, msg}}
@@ -40,7 +49,9 @@ defmodule BattleBoxClient.BotServer do
   def handle_event(:internal, %{"connection_id" => connection_id}, :connecting, data) do
     Logger.info("client connected with connection_id:#{connection_id}")
 
-    :ok = :gen_tcp.send(data.socket, encode(%{"token" => data.token, "lobby" => data.lobby}))
+    :ok =
+      data.transport.send(data.socket, encode(%{"token" => data.token, "lobby" => data.lobby}))
+
     data = Map.put(data, :connection_id, connection_id)
 
     {:next_state, :authing, data}
@@ -52,7 +63,7 @@ defmodule BattleBoxClient.BotServer do
 
     case status do
       "idle" ->
-        :ok = :gen_tcp.send(data.socket, encode(%{"action" => "start_match_making"}))
+        :ok = data.transport.send(data.socket, encode(%{"action" => "start_match_making"}))
         {:next_state, :match_making, data}
 
       "match_making" ->
@@ -70,7 +81,10 @@ defmodule BattleBoxClient.BotServer do
         data
       ) do
     Logger.info("got game request for game_id:#{game_id}")
-    :ok = :gen_tcp.send(data.socket, encode(%{"action" => "accept_game", "game_id" => game_id}))
+
+    :ok =
+      data.transport.send(data.socket, encode(%{"action" => "accept_game", "game_id" => game_id}))
+
     data = Map.merge(data, %{game_info: %{player: player, game_id: game_id}})
     {:next_state, :playing, data}
   end
@@ -82,17 +96,18 @@ defmodule BattleBoxClient.BotServer do
           "moves_request" => %{
             "request_id" => request_id,
             "game_id" => game_id,
-            "game_state" => %{"robots" => _robots}
+            "game_state" => %{"robots" => robots}
           }
         },
         :playing,
         %{game_info: %{game_id: game_id}} = data
       ) do
     Logger.info("Moves request for game_id:#{game_id}, request_id:#{request_id}")
-    moves = []
+
+    moves = Logic.make_moves(robots, data.game_info.player)
 
     :ok =
-      :gen_tcp.send(
+      data.transport.send(
         data.socket,
         encode(%{
           "action" => "send_moves",
@@ -111,7 +126,19 @@ defmodule BattleBoxClient.BotServer do
         %{game_info: %{game_id: game_id}} = data
       ) do
     Logger.info("Game over game_id:#{game_id} winner:#{winner}")
-    :ok = :gen_tcp.send(data.socket, encode(%{"action" => "start_match_making"}))
+    :ok = data.transport.send(data.socket, encode(%{"action" => "start_match_making"}))
+    data = Map.drop(data, [:game_info])
+    {:next_state, :match_making, data}
+  end
+
+  def handle_event(
+        :internal,
+        %{"game_id" => game_id, "info" => "game_cancelled"},
+        _,
+        %{game_info: %{game_id: game_id}} = data
+      ) do
+    Logger.info("Game Cancelled game_id:#{game_id}")
+    :ok = data.transport.send(data.socket, encode(%{"action" => "start_match_making"}))
     data = Map.drop(data, [:game_info])
     {:next_state, :match_making, data}
   end
@@ -122,9 +149,8 @@ defmodule BattleBoxClient.BotServer do
   end
 
   defp encode(msg) do
-    Jason.encode!(msg) <> "\n"
+    Jason.encode!(msg)
   end
 end
 
-# {:ok, pid1} = BattleBoxClient.BotServer.start_link(%{token:  "791c66d2cfdca9b45ca230a41098ce1ef342fcc3d57282275be121bac8111c51", lobby: "foo", domain: 'localhost', port: 4001})
-# {:ok, pid2} = BattleBoxClient.BotServer.start_link(%{token:  "791c66d2cfdca9b45ca230a41098ce1ef342fcc3d57282275be121bac8111c51", lobby: "foo", domain: 'localhost', port: 4001})
+# {:ok, _pid} = BattleBoxClient.BotServer.start_link(%{token:  "791c66d2cfdca9b45ca230a41098ce1ef342fcc3d57282275be121bac8111c51", lobby: "foo", domain: 'localhost', port: 4001})
