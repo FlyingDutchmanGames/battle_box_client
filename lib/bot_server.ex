@@ -20,8 +20,11 @@ defmodule BattleBoxClient.BotServer do
         recbuf: @recieve_buffer_bytes
       ])
 
+    :ok =
+      data.transport.send(socket, encode(%{"token" => data.token, "lobby" => data.lobby}))
+
     data = Map.put(data, :socket, socket)
-    {:ok, :connecting, data}
+    {:ok, :authing, data}
   end
 
   def handle_event(:info, {:tcp_closed, _socket}, state, _data) do
@@ -46,20 +49,10 @@ defmodule BattleBoxClient.BotServer do
     end
   end
 
-  def handle_event(:internal, %{"connection_id" => connection_id}, :connecting, data) do
-    Logger.info("client connected with connection_id:#{connection_id}")
-
-    :ok =
-      data.transport.send(data.socket, encode(%{"token" => data.token, "lobby" => data.lobby}))
-
-    data = Map.put(data, :connection_id, connection_id)
-
-    {:next_state, :authing, data}
-  end
-
-  def handle_event(:internal, %{"bot_id" => bot_id, "status" => status}, _, data)
+  def handle_event(:internal, %{"bot_id" => bot_id, "status" => status, "connection_id" => connection_id}, _, data)
       when status in ["idle", "match_making"] do
-    Logger.info("bot in lobby:#{data.lobby}, bot_id:#{bot_id}, status:#{status}")
+    Logger.info("bot in lobby:#{data.lobby}, bot_id:#{bot_id}, status:#{status} and connection_id:#{connection_id}")
+        data = Map.put(data, :connection_id, connection_id)
 
     case status do
       "idle" ->
@@ -67,7 +60,7 @@ defmodule BattleBoxClient.BotServer do
         {:next_state, :match_making, data}
 
       "match_making" ->
-        :keep_state_and_data
+        {:keep_state, data}
     end
   end
 
