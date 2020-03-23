@@ -65,12 +65,18 @@ defmodule BattleBoxClient.BotServer do
 
     case status do
       "idle" ->
+        Process.sleep(30000)
         :ok = data.transport.send(data.socket, encode(%{"action" => "start_match_making"}))
         {:next_state, :match_making, data}
 
       "match_making" ->
         {:keep_state, data}
     end
+  end
+
+  def handle_event(:internal, %{"error" => "invalid_msg_sent"}, _state, data) do
+    Logger.warn("INVALID MSG SENT")
+    :keep_state_and_data
   end
 
   def handle_event(
