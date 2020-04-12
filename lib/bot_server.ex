@@ -65,7 +65,6 @@ defmodule BattleBoxClient.BotServer do
 
     case status do
       "idle" ->
-        Process.sleep(30000)
         :ok = data.transport.send(data.socket, encode(%{"action" => "start_match_making"}))
         {:next_state, :match_making, data}
 
