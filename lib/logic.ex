@@ -1,5 +1,5 @@
 defmodule BattleBoxClient.Logic do
-  def make_moves(robots, player) do
+  def make_commands(robots, player) do
     robots
     |> Enum.filter(fn robot -> robot["player_id"] == player end)
     |> Enum.map(fn robot ->

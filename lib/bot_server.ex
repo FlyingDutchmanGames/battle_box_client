@@ -99,8 +99,8 @@ defmodule BattleBoxClient.BotServer do
   def handle_event(
         :internal,
         %{
-          "request_type" => "moves_request",
-          "moves_request" => %{
+          "request_type" => "commands_request",
+          "commands_request" => %{
             "request_id" => request_id,
             "game_id" => game_id,
             "game_state" => %{"robots" => robots}
@@ -109,17 +109,17 @@ defmodule BattleBoxClient.BotServer do
         :playing,
         %{game_info: %{game_id: game_id}} = data
       ) do
-    Logger.info("Moves request for game_id:#{game_id}, request_id:#{request_id}")
+    Logger.info("Commands request for game_id:#{game_id}, request_id:#{request_id}")
 
-    moves = Logic.make_moves(robots, data.game_info.player)
+    commands = Logic.make_commands(robots, data.game_info.player)
 
     :ok =
       data.transport.send(
         data.socket,
         encode(%{
-          "action" => "send_moves",
+          "action" => "send_commands",
           "request_id" => request_id,
-          "moves" => moves
+          "commands" => commands
         })
       )
 
