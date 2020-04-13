@@ -1,5 +1,5 @@
-defmodule BattleBoxClient.Logic do
-  def make_commands(robots, player) do
+defmodule BattleBoxClient.Games.RobotGame.MoveToCenter do
+  def make_commands(%{"robots" => robots}, %{"player" => player}) do
     robots
     |> Enum.filter(fn robot -> robot["player_id"] == player end)
     |> Enum.map(fn robot ->

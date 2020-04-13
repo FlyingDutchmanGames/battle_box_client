@@ -3,7 +3,7 @@ defmodule BattleBoxClient.Messages do
     encode(%{"token" => token, "lobby" => lobby})
   end
 
-  def accept_game(game_id) do
+  def accept_game(%{"game_id" => game_id}) do
     encode(%{"action" => "accept_game", "game_id" => game_id})
   end
 
@@ -19,11 +19,11 @@ defmodule BattleBoxClient.Messages do
     encode(%{"action" => "start_match_making"})
   end
 
-  defmacro game_request(game_id, player) do
+  defmacro game_request(game_info) do
     quote do
       %{
         "request_type" => "game_request",
-        "game_info" => %{"game_id" => unquote(game_id), "player" => unquote(player)}
+        "game_info" => unquote(game_info)
       }
     end
   end
