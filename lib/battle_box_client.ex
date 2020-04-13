@@ -1,2 +1,0 @@
-defmodule BattleBoxClient do
-end

@@ -13,6 +13,7 @@ defmodule BattleBoxClient.MixProject do
 
   def application do
     [
+      mod: {BattleBoxClient.Application, []},
       extra_applications: [:logger]
     ]
   end
