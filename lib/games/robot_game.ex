@@ -1,4 +1,15 @@
 defmodule BattleBoxClient.Games.RobotGame do
+
+  @doc ~S"""
+  Calculates the distance between two points as the crow flies.
+
+  iex> BattleBoxClient.Games.RobotGame.adjacent_locations([1, 1])
+  [[1, 2], [1, 0], [2, 1], [0, 1]]
+  """
+  def adjacent_locations([x, y]) do
+    [[x, y+1], [x, y-1], [x+1, y], [x-1, y]]
+  end
+
   def center_point(board) do
   end
 
