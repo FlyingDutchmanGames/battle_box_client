@@ -21,7 +21,8 @@ defmodule BattleBoxClient.MixProject do
   defp deps do
     [
       {:jason, "~> 1.1"},
-      {:gen_state_machine, "~> 2.0"}
+      {:gen_state_machine, "~> 2.0"},
+      {:telemetry, "~> 0.4.1"},
     ]
   end
 end
