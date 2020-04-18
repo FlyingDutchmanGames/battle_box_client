@@ -47,6 +47,12 @@ defmodule BattleBoxClient.Messages do
     end
   end
 
+  defmacro status(status, bot_server_id) do
+    quote do
+      %{"status" => unquote(status), "bot_server_id" => unquote(bot_server_id)}
+    end
+  end
+
   defmacro bot_instance_failure do
     quote do
       %{"error" => "bot_instance_failure"}

@@ -2,6 +2,8 @@ defmodule BattleBoxClient.Application do
   use Application
 
   def start(_type, _args) do
+    :ok = BattleBoxClient.ConsoleLogger.attach!()
+
     children = [
       BattleBoxClient.BotSupervisor
     ]

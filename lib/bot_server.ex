@@ -39,12 +39,19 @@ defmodule BattleBoxClient.BotServer do
     end
   end
 
-  def handle_event(:internal, status("idle"), _, data) do
+  def handle_event(:internal, %{"error" => "invalid_token"}, _, data) do
+    :ok = telemetry_event(:invalid_token, data)
+    {:stop, :normal}
+  end
+
+  def handle_event(:internal, status("idle", bot_server_id) = event, _, data) do
+    data = Map.merge(data, %{bot_server_id: bot_server_id})
     :ok = data.transport.send(data.socket, start_matchmaking())
     {:next_state, :match_making, data}
   end
 
   def handle_event(:internal, status("match_making"), _, data) do
+    :ok = telemetry_event(:start_match_making, data)
     :keep_state_and_data
   end
 
@@ -59,8 +66,11 @@ defmodule BattleBoxClient.BotServer do
   end
 
   def handle_event(:internal, commands_request(_game_id, request_id, game_state), :playing, data) do
+    start_time = System.monotonic_time()
     commands = data.logic.make_commands(game_state, data.game_info)
+    end_time = System.monotonic_time()
     :ok = data.transport.send(data.socket, commands(request_id, commands))
+    telemetry_event(:completed_commands_request, %{time: end_time - start_time}, data)
     :keep_state_and_data
   end
 
@@ -73,10 +83,33 @@ defmodule BattleBoxClient.BotServer do
   def handle_event(:internal, game_cancelled(game_id), _, data) do
     :ok = data.transport.send(data.socket, start_matchmaking())
     data = Map.drop(data, [:game_info])
+    :ok = telemetry_event(:game_cancelled, data)
     {:next_state, :match_making, data}
   end
 
   def handle_event(:internal, bot_instance_failure(), state, data) do
     {:stop, :normal}
+  end
+
+  defp telemetry_event(event_name, data) do
+    telemetry_event(event_name, %{}, data)
+  end
+
+  defp telemetry_event(event_name, event, data) do
+    metadata = %{
+      logic: data[:logic],
+      lobby: data[:lobby],
+      token: censor_token(data[:token]),
+      bot_server_id: data[:bot_server_id],
+      game_info: data[:game_info]
+    }
+
+    :telemetry.execute([:battle_box_client, event_name], event, metadata)
+  end
+
+  defp censor_token(nil), do: nil
+
+  defp censor_token(<<prefix::binary-size(8)>> <> _) do
+    prefix <> "[CENSORED]"
   end
 end

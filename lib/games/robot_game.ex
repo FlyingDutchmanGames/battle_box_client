@@ -6,7 +6,7 @@ defmodule BattleBoxClient.Games.RobotGame do
   [[1, 2], [1, 0], [2, 1], [0, 1]]
   """
   def adjacent_locations([x, y]) do
-    [[x, y+1], [x, y-1], [x+1, y], [x-1, y]]
+    [[x, y + 1], [x, y - 1], [x + 1, y], [x - 1, y]]
   end
 
   @doc ~S"""
