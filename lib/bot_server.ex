@@ -1,5 +1,6 @@
 defmodule BattleBoxClient.BotServer do
   use GenStateMachine, callback_mode: [:handle_event_function], restart: :temporary
+  alias BattleBoxClient.Games.RobotGame
   require BattleBoxClient.Messages
   import BattleBoxClient.Messages
   require Logger
@@ -60,6 +61,7 @@ defmodule BattleBoxClient.BotServer do
   end
 
   def handle_event(:internal, game_request(game_info), :match_making, data) do
+    game_info = RobotGame.initialize_game_info(game_info)
     :ok = data.transport.send(data.socket, accept_game(game_info))
     data = Map.merge(data, %{game_info: game_info})
     {:next_state, :playing, data}
@@ -88,6 +90,7 @@ defmodule BattleBoxClient.BotServer do
   end
 
   def handle_event(:internal, bot_instance_failure(), state, data) do
+    :ok = telemetry_event(:bot_instance_failure, data)
     {:stop, :normal}
   end
 

@@ -5,7 +5,7 @@ defmodule BattleBoxClient.Games.RobotGame.ShelterInPlace do
     |> Enum.map(fn robot ->
       %{
         "type" => "guard",
-        "robot_id" => robot["id"],
+        "robot_id" => robot["id"]
       }
     end)
   end
