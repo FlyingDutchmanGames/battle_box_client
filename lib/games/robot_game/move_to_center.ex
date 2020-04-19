@@ -1,26 +1,32 @@
 defmodule BattleBoxClient.Games.RobotGame.MoveToCenter do
-  def make_commands(%{"robots" => robots}, %{"player" => player}) do
+  alias BattleBoxClient.Games.RobotGame.Terrain
+
+  def make_commands(%{"robots" => robots}, %{"player" => player} = game_info) do
+    %{rows: rows, cols: cols} = Terrain.dimensions(game_info["settings"]["terrain"])
+    row_midpoint = Integer.floor_div(rows, 2)
+    col_midpoint = Integer.floor_div(cols, 2)
+
     robots
     |> Enum.filter(fn robot -> robot["player_id"] == player end)
     |> Enum.map(fn robot ->
-      [x, y] = robot["location"]
+      [row, col] = robot["location"]
 
       target =
         cond do
-          y > 9 ->
-            [x, y - 1]
+          col > col_midpoint ->
+            [row, col - 1]
 
-          y < 9 ->
-            [x, y + 1]
+          col < col_midpoint ->
+            [row, col + 1]
 
-          x < 9 ->
-            [x + 1, y]
+          row < row_midpoint ->
+            [row + 1, col]
 
-          x > 9 ->
-            [x - 1, y]
+          row > row_midpoint ->
+            [row - 1, col]
 
           true ->
-            [x - 1, y]
+            [row - 1, col]
         end
 
       %{
