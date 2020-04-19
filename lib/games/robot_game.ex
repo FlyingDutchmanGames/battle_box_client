@@ -1,4 +1,9 @@
 defmodule BattleBoxClient.Games.RobotGame do
+  def initialize_game_info(game_info) do
+    decoded_terrain = Base.decode64!(game_info["settings"]["terrain_base64"])
+    put_in(game_info["settings"]["terrain"], decoded_terrain)
+  end
+
   @doc ~S"""
   Calculates the distance between two points as the crow flies.
 
