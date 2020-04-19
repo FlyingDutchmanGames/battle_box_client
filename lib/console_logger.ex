@@ -44,7 +44,9 @@ defmodule BattleBoxClient.ConsoleLogger do
         )
 
       :bot_instance_failure ->
-        Logger.error("Bot Server: \"#{metadata.bot_server_id}\" Bot instace failure! Check Server Logs")
+        Logger.error(
+          "Bot Server: \"#{metadata.bot_server_id}\" Bot instace failure! Check Server Logs"
+        )
     end
   end
 end
