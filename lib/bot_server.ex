@@ -88,6 +88,7 @@ defmodule BattleBoxClient.BotServer do
   end
 
   def handle_event(:internal, bot_instance_failure(), state, data) do
+    :ok = telemetry_event(:bot_instance_failure, data)
     {:stop, :normal}
   end
 
