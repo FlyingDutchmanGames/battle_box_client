@@ -1,12 +1,9 @@
 defmodule BattleBoxClient.Games.RobotGame.ShelterInPlace do
-  def make_commands(%{"robots" => robots}, %{"player" => player}) do
-    robots
-    |> Enum.filter(fn robot -> robot["player_id"] == player end)
-    |> Enum.map(fn robot ->
-      %{
-        "type" => "guard",
-        "robot_id" => robot["id"]
-      }
-    end)
+  import BattleBoxClient.Games.RobotGame
+
+  def make_commands(%{"my_robots" => my_robots}, _game_info) do
+    for robot <- my_robots do
+      guard(robot)
+    end
   end
 end
