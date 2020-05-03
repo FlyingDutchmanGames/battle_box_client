@@ -69,6 +69,7 @@ defmodule BattleBoxClient.BotServer do
 
   def handle_event(:internal, commands_request(_game_id, request_id, game_state), :playing, data) do
     start_time = System.monotonic_time()
+    game_state = RobotGame.initialize_game_state(game_state, data.game_info)
     commands = data.logic.make_commands(game_state, data.game_info)
     end_time = System.monotonic_time()
     :ok = data.transport.send(data.socket, commands(request_id, commands))
