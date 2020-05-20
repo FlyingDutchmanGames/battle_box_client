@@ -1,6 +1,6 @@
 defmodule BattleBoxClient.Messages do
-  def auth(token, lobby) do
-    encode(%{"token" => token, "lobby" => lobby})
+  def auth(token, bot, lobby) do
+    encode(%{"token" => token, "bot" => bot, "lobby" => lobby})
   end
 
   def accept_game(%{"game_id" => game_id}) do

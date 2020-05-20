@@ -7,7 +7,7 @@ defmodule BattleBoxClient.BotServer do
 
   @recieve_buffer_bytes 65536
 
-  def start_link(%{token: _, lobby: _, host: _, port: _, logic: _, transport: _} = data) do
+  def start_link(%{token: _, bot: _, lobby: _, host: _, port: _, logic: _, transport: _} = data) do
     GenStateMachine.start_link(__MODULE__, data)
   end
 
@@ -20,7 +20,7 @@ defmodule BattleBoxClient.BotServer do
         recbuf: @recieve_buffer_bytes
       ])
 
-    :ok = data.transport.send(socket, auth(data.token, data.lobby))
+    :ok = data.transport.send(socket, auth(data.token, data.bot, data.lobby))
     data = Map.put(data, :socket, socket)
     {:ok, :authing, data}
   end
